@@ -1,6 +1,6 @@
 {
   "name": "nexusshorts",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,8 +14,10 @@
     "@clerk/nextjs": "^6.9.6",
     "@prisma/client": "^5.22.0",
     "next": "^14.2.18",
+    "openai": "^4.73.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "replicate": "^1.0.1",
     "svix": "^1.42.0"
   },
   "devDependencies": {

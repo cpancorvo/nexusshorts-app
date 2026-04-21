@@ -1,156 +1,78 @@
-// NexusShorts database schema
-// Run `npm run db:push` after adding your Neon DATABASE_URL to push this to Postgres.
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-// ============================================================
-// USERS — synced from Clerk via webhook
-// ============================================================
 model User {
-  id          String   @id @default(cuid())
-  clerkId     String   @unique
-  email       String   @unique
-  name        String?
-  imageUrl    String?
-
-  // Subscription (populated by Stripe in Phase 2)
-  stripeCustomerId     String?   @unique
-  stripeSubscriptionId String?   @unique
-  subscriptionStatus   SubStatus @default(NONE)
-  plan                 Plan      @default(FREE)
-
-  // Usage metering — resets monthly
-  videosUsedThisMonth  Int      @default(0)
-  usageResetAt         DateTime @default(now())
-
-  series    Series[]
-  episodes  Episode[]
-
+  id String @id @default(cuid())
+  clerkId String @unique
+  email String @unique
+  name String?
+  imageUrl String?
+  stripeCustomerId String? @unique
+  stripeSubscriptionId String? @unique
+  subscriptionStatus SubStatus @default(NONE)
+  plan Plan @default(FREE)
+  videosUsedThisMonth Int @default(0)
+  usageResetAt DateTime @default(now())
+  series Series[]
+  episodes Episode[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([clerkId])
   @@index([email])
 }
 
-enum Plan {
-  FREE
-  STARTER    // $19/mo — 30 videos
-  CREATOR    // $39/mo — 150 videos
-  AGENCY     // $69/mo — 500 videos
-}
+enum Plan { FREE; STARTER; CREATOR; AGENCY }
+enum SubStatus { NONE; ACTIVE; PAST_DUE; CANCELED; TRIALING }
 
-enum SubStatus {
-  NONE
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  TRIALING
-}
-
-// ============================================================
-// SERIES — a recurring automated channel (e.g. "Forgotten history")
-// ============================================================
 model Series {
-  id          String       @id @default(cuid())
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  name        String
-  niche       String       // the topic/theme prompt
-  style       String       @default("cinematic, dramatic lighting, photorealistic")
-
-  voiceId     String?      // ElevenLabs voice id
-  brandColor  String       @default("#d4ff3a")
-
-  // Scheduling
-  cadence     Cadence      @default(DAILY)
-  postTime    String       @default("09:00")   // HH:MM in user timezone
-  timezone    String       @default("America/New_York")
-
-  status      SeriesStatus @default(ACTIVE)
-
-  // Connected social accounts (set in Phase 4)
-  tiktokEnabled     Boolean @default(false)
-  instagramEnabled  Boolean @default(false)
-  youtubeEnabled    Boolean @default(false)
-
-  episodes    Episode[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name String
+  niche String
+  style String @default("cinematic, dramatic lighting, photorealistic")
+  voiceId String?
+  brandColor String @default("#d4ff3a")
+  cadence Cadence @default(DAILY)
+  postTime String @default("09:00")
+  timezone String @default("America/New_York")
+  status SeriesStatus @default(ACTIVE)
+  tiktokEnabled Boolean @default(false)
+  instagramEnabled Boolean @default(false)
+  youtubeEnabled Boolean @default(false)
+  episodes Episode[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   @@index([userId])
 }
 
-enum Cadence {
-  DAILY
-  TWICE_DAILY
-  WEEKLY
-  MANUAL
-}
+enum Cadence { DAILY; TWICE_DAILY; WEEKLY; MANUAL }
+enum SeriesStatus { ACTIVE; PAUSED; ARCHIVED }
 
-enum SeriesStatus {
-  ACTIVE
-  PAUSED
-  ARCHIVED
-}
-
-// ============================================================
-// EPISODES — a single generated video
-// ============================================================
 model Episode {
-  id          String        @id @default(cuid())
-  seriesId    String
-  series      Series        @relation(fields: [seriesId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  title       String?
-  scriptJson  Json?         // full script from LLM
-  videoUrl    String?       // final MP4 url on R2
-  audioUrl    String?       // voiceover MP3
+  id String @id @default(cuid())
+  seriesId String
+  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title String?
+  scriptJson Json?
+  videoUrl String?
+  audioUrl String?
   thumbnailUrl String?
-  durationMs  Int?
-
-  status      EpisodeStatus @default(PENDING)
+  durationMs Int?
+  status EpisodeStatus @default(PENDING)
   errorMessage String?
-
-  // Scheduled publish time
   scheduledFor DateTime?
-  publishedAt  DateTime?
-
-  // Per-platform post tracking
-  tiktokPostId    String?
+  publishedAt DateTime?
+  tiktokPostId String?
   instagramPostId String?
-  youtubePostId   String?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  youtubePostId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   @@index([seriesId])
   @@index([userId])
   @@index([status])
-  @@index([scheduledFor])
 }
 
-enum EpisodeStatus {
-  PENDING
-  GENERATING_SCRIPT
-  GENERATING_VOICE
-  TRANSCRIBING
-  GENERATING_IMAGES
-  RENDERING
-  UPLOADING
-  READY
-  SCHEDULED
-  PUBLISHED
-  FAILED
-}
+enum EpisodeStatus { PENDING; GENERATING_SCRIPT; GENERATING_VOICE; TRANSCRIBING; GENERATING_IMAGES; RENDERING; UPLOADING; READY; SCHEDULED; PUBLISHED; FAILED }
