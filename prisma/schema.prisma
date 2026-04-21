@@ -1,78 +1,122 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 model User {
-  id String @id @default(cuid())
-  clerkId String @unique
-  email String @unique
-  name String?
-  imageUrl String?
-  stripeCustomerId String? @unique
-  stripeSubscriptionId String? @unique
-  subscriptionStatus SubStatus @default(NONE)
-  plan Plan @default(FREE)
-  videosUsedThisMonth Int @default(0)
-  usageResetAt DateTime @default(now())
-  series Series[]
-  episodes Episode[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String    @id @default(cuid())
+  clerkId              String    @unique
+  email                String    @unique
+  name                 String?
+  imageUrl             String?
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  subscriptionStatus   SubStatus @default(NONE)
+  plan                 Plan      @default(FREE)
+  videosUsedThisMonth  Int       @default(0)
+  usageResetAt         DateTime  @default(now())
+  series               Series[]
+  episodes             Episode[]
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
   @@index([clerkId])
   @@index([email])
 }
 
-enum Plan { FREE; STARTER; CREATOR; AGENCY }
-enum SubStatus { NONE; ACTIVE; PAST_DUE; CANCELED; TRIALING }
+enum Plan {
+  FREE
+  STARTER
+  CREATOR
+  AGENCY
+}
+
+enum SubStatus {
+  NONE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}
 
 model Series {
-  id String @id @default(cuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name String
-  niche String
-  style String @default("cinematic, dramatic lighting, photorealistic")
-  voiceId String?
-  brandColor String @default("#d4ff3a")
-  cadence Cadence @default(DAILY)
-  postTime String @default("09:00")
-  timezone String @default("America/New_York")
-  status SeriesStatus @default(ACTIVE)
-  tiktokEnabled Boolean @default(false)
-  instagramEnabled Boolean @default(false)
-  youtubeEnabled Boolean @default(false)
-  episodes Episode[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String       @id @default(cuid())
+  userId           String
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  niche            String
+  style            String       @default("cinematic, dramatic lighting, photorealistic")
+  voiceId          String?
+  brandColor       String       @default("#d4ff3a")
+  cadence          Cadence      @default(DAILY)
+  postTime         String       @default("09:00")
+  timezone         String       @default("America/New_York")
+  status           SeriesStatus @default(ACTIVE)
+  tiktokEnabled    Boolean      @default(false)
+  instagramEnabled Boolean      @default(false)
+  youtubeEnabled   Boolean      @default(false)
+  episodes         Episode[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
   @@index([userId])
 }
 
-enum Cadence { DAILY; TWICE_DAILY; WEEKLY; MANUAL }
-enum SeriesStatus { ACTIVE; PAUSED; ARCHIVED }
+enum Cadence {
+  DAILY
+  TWICE_DAILY
+  WEEKLY
+  MANUAL
+}
+
+enum SeriesStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
 
 model Episode {
-  id String @id @default(cuid())
-  seriesId String
-  series Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title String?
-  scriptJson Json?
-  videoUrl String?
-  audioUrl String?
-  thumbnailUrl String?
-  durationMs Int?
-  status EpisodeStatus @default(PENDING)
-  errorMessage String?
-  scheduledFor DateTime?
-  publishedAt DateTime?
-  tiktokPostId String?
+  id              String        @id @default(cuid())
+  seriesId        String
+  series          Series        @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String?
+  scriptJson      Json?
+  videoUrl        String?
+  audioUrl        String?
+  thumbnailUrl    String?
+  durationMs      Int?
+  status          EpisodeStatus @default(PENDING)
+  errorMessage    String?
+  scheduledFor    DateTime?
+  publishedAt     DateTime?
+  tiktokPostId    String?
   instagramPostId String?
-  youtubePostId String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  youtubePostId   String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
   @@index([seriesId])
   @@index([userId])
   @@index([status])
 }
 
-enum EpisodeStatus { PENDING; GENERATING_SCRIPT; GENERATING_VOICE; TRANSCRIBING; GENERATING_IMAGES; RENDERING; UPLOADING; READY; SCHEDULED; PUBLISHED; FAILED }
+enum EpisodeStatus {
+  PENDING
+  GENERATING_SCRIPT
+  GENERATING_VOICE
+  TRANSCRIBING
+  GENERATING_IMAGES
+  RENDERING
+  UPLOADING
+  READY
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
